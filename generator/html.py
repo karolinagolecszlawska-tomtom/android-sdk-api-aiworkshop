@@ -6,6 +6,7 @@ Model keys read here (produced by generator/build.py):
                        "packages": {package: {state: count}},
                        "consumers": [{"repo", "via" (None | via-artifact coordinate)}],
                        "consumer_total"}]
+  state_totals       {state: row count over every artifact}
   consumer_versions  [{"repo", "pinned", "behind_stable", "behind_rc"}]  (int or "ahead of …")
   unconsumed         {"artifacts": [coordinate], "packages": [package]}
   docs_references    [repo name]
@@ -19,6 +20,8 @@ from generator.state import STATE_UNKNOWN
 STATE_ORDER = ["GA", "BETA", "ALPHA", "EXPERIMENTAL", "DEPRECATED", "INTERNAL",
                "INTERNAL_AVAILABILITY"]
 UNKNOWN_GROUP = "Packages unknown (no state.csv)"
+EMPTY_GROUP = "No API rows (empty state.csv)"
+EMPTY_CELL = "no API rows"
 
 CSS = """
 :root { color-scheme: light dark; --fg: #1d1d1f; --bg: #ffffff; --muted: #6e6e73;
@@ -63,14 +66,17 @@ def _consumers_cell(artifact):
 
 
 def _packages(artifacts):
+    """[(group heading, [(artifact, counts | STATE_UNKNOWN | EMPTY_CELL)])], packages first."""
     groups = {}
     for a in artifacts:
-        if a.get("stability") == STATE_UNKNOWN or not a["packages"]:
-            groups.setdefault(UNKNOWN_GROUP, []).append((a, None))
-            continue
+        if a.get("stability") == STATE_UNKNOWN:
+            groups.setdefault(UNKNOWN_GROUP, []).append((a, STATE_UNKNOWN))
+        elif not a["packages"]:  # state.csv present, but with no rows
+            groups.setdefault(EMPTY_GROUP, []).append((a, EMPTY_CELL))
         for package, counts in a["packages"].items():
             groups.setdefault(package, []).append((a, counts))
-    return sorted(groups.items(), key=lambda kv: (kv[0] == UNKNOWN_GROUP, kv[0]))
+    special = (EMPTY_GROUP, UNKNOWN_GROUP)
+    return sorted(groups.items(), key=lambda kv: (kv[0] in special, kv[0]))
 
 
 def _package_sections(model):
@@ -82,8 +88,8 @@ def _package_sections(model):
     for package, rows in _packages(model["artifacts"]):
         out.append(f"<h3>{_e(package)}</h3><table>{head}")
         for artifact, counts in rows:
-            if counts is None:
-                states = f'<td colspan="{max(len(columns), 1)}">{_e(STATE_UNKNOWN)}</td>'
+            if isinstance(counts, str):
+                states = f'<td colspan="{max(len(columns), 1)}">{_e(counts)}</td>'
             else:
                 states = "".join(f'<td class="num">{counts.get(s, 0)}</td>' for s in columns)
             out.append(
@@ -93,6 +99,14 @@ def _package_sections(model):
                 f"<td class=\"num\">{_e(artifact.get('consumer_total', 0))}</td></tr>")
         out.append("</table>")
     return "".join(out)
+
+
+def _totals_table(model):
+    totals = model.get("state_totals", {})
+    columns = _state_columns(model["artifacts"])
+    return ("<table><tr>" + "".join(f"<th>{_e(s)}</th>" for s in columns) + "</tr><tr>"
+            + "".join(f'<td class="num">{_e(totals.get(s, 0))}</td>' for s in columns)
+            + "</tr></table>")
 
 
 def _versions_table(rows, name_key, baselines, extra_column=None):
@@ -131,6 +145,7 @@ def render(model):
         f"<p class=\"muted\">Latest stable {_e(baselines['stable'])} · "
         f"latest RC {_e(baselines['rc'])}</p>",
         _section("Packages", _package_sections(model)),
+        _section("Stability totals", _totals_table(model)),
         _section("Consumer versions",
                  _versions_table(model.get("consumer_versions", []), "repo", baselines)),
         _section("No consumers",

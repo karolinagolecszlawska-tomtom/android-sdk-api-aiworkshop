@@ -46,7 +46,18 @@ MODEL = {
             "consumers": [],
             "consumer_total": 0,
         },
+        {
+            # Has a state.csv, but it holds only the header line.
+            "coordinate": "com.tomtom.sdk.maps:map-display-compose-premium",
+            "module": "maps/map-display-compose-premium",
+            "owner": "lp-mapvis-mapdisplaysdk-android",
+            "stability": None,
+            "packages": {},
+            "consumers": [],
+            "consumer_total": 0,
+        },
     ],
+    "state_totals": {"GA": 15, "BETA": 2, "INTERNAL_AVAILABILITY": 3},
     "consumer_versions": [
         {"repo": "r2-navapp", "pinned": "2.8.0-rc01", "behind_stable": "ahead of stable",
          "behind_rc": 0},
@@ -70,6 +81,12 @@ def section(page, title):
     return m.group(1) if m else ""
 
 
+def artifact_row(page, coordinate):
+    """The <tr> of `coordinate` in the package tables."""
+    m = re.search(r"<tr><td><code>" + re.escape(coordinate) + r"</code></td>.*?</tr>", page)
+    return m.group(0) if m else ""
+
+
 class RenderTest(unittest.TestCase):
     def setUp(self):
         self.page = dashboard_html.render(MODEL)
@@ -90,8 +107,20 @@ class RenderTest(unittest.TestCase):
         self.assertIn("r2-navapp via <code>map-display-duo-internal</code>", self.page)
 
     def test_state_unknown_shown(self):
-        self.assertIn("state unknown", self.page)
-        self.assertIn("com.tomtom.sdk.maps.visualization:navigation", self.page)
+        self.assertIn("state unknown",
+                      artifact_row(self.page, "com.tomtom.sdk.maps.visualization:navigation"))
+
+    def test_empty_state_csv_is_not_state_unknown(self):
+        row = artifact_row(self.page, "com.tomtom.sdk.maps:map-display-compose-premium")
+        self.assertNotEqual(row, "")
+        self.assertNotIn("state unknown", row)
+        self.assertIn("no API rows", row)
+
+    def test_stability_totals_one_column_per_state(self):
+        totals = section(self.page, "Stability totals")
+        self.assertIn("<tr><th>GA</th><th>BETA</th><th>INTERNAL_AVAILABILITY</th></tr>", totals)
+        self.assertIn('<tr><td class="num">15</td><td class="num">2</td>'
+                      '<td class="num">3</td></tr>', totals)
 
     def test_consumer_versions_section(self):
         versions = section(self.page, "Consumer versions")
@@ -112,8 +141,9 @@ class RenderTest(unittest.TestCase):
 
     def test_extra_catalogs_section_when_present(self):
         extra = section(self.page, "Extra catalogs")
-        self.assertIn("old-version", extra)
-        self.assertIn("12", extra)
+        self.assertIn("<tr><td>old-version</td><td>2.6.0</td><td>ahead of stable</td>"
+                      "<td>12</td><td><code>com.tomtom.sdk.maps:map-display-common</code></td>"
+                      "</tr>", extra)
         no_extra = dashboard_html.render(dict(MODEL, extra_consumers=[]))
         self.assertNotIn("<h2>Extra catalogs</h2>", no_extra)
 
