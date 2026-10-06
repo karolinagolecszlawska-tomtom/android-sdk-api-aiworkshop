@@ -6,7 +6,7 @@ TAG_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-rc(\d+))?$")
 
 def tag_key(tag):
     """Sort key: X.Y.Z-rcNN sorts before X.Y.Z. Raises ValueError for non-release tags."""
-    m = TAG_RE.match(tag)
+    m = TAG_RE.match(tag) if isinstance(tag, str) else None
     if not m:
         raise ValueError(f"not a release tag: {tag!r}")
     major, minor, patch, rc = m.groups()

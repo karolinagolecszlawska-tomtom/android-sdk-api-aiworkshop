@@ -55,16 +55,16 @@ IN_SCOPE = {
 
 class ParseModuleTest(unittest.TestCase):
     def test_coordinate_from_extra_lines(self):
-        mod = modules.parse_module("maps/map-display-duo-internal", DUO_GRADLE)
-        self.assertEqual(mod["coordinate"], "com.tomtom.sdk.maps:map-display-duo-internal")
-        self.assertEqual(mod["module"], "maps/map-display-duo-internal")
+        self.assertEqual(modules.parse_module(DUO_GRADLE),
+                         "com.tomtom.sdk.maps:map-display-duo-internal")
 
     def test_coordinate_uses_group_id_not_directory(self):
-        mod = modules.parse_module("maps/visualization/routing", KMP_GRADLE)
-        self.assertEqual(mod["coordinate"], "com.tomtom.sdk.maps.visualization:routing")
+        # Directory maps/visualization/routing, coordinate from groupId + artifactId.
+        self.assertEqual(modules.parse_module(KMP_GRADLE),
+                         "com.tomtom.sdk.maps.visualization:routing")
 
     def test_module_without_artifact_id_is_skipped(self):
-        self.assertIsNone(modules.parse_module("maps/docs", UNPUBLISHED_GRADLE))
+        self.assertIsNone(modules.parse_module(UNPUBLISHED_GRADLE))
 
 
 class ApiDepsTest(unittest.TestCase):

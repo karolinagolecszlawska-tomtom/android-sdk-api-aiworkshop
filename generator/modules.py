@@ -14,17 +14,12 @@ def module_dirs(tree_paths, root="maps"):
                   if p.startswith(root + "/") and p.endswith(suffix))
 
 
-def parse_module(path, gradle_text):
-    """Module dict with its groupId:artifactId coordinate, or None when unpublished."""
+def parse_module(gradle_text):
+    """`groupId:artifactId` coordinate a build file publishes, or None when unpublished."""
     artifact, group = _ARTIFACT_RE.search(gradle_text), _GROUP_RE.search(gradle_text)
     if not (artifact and group):
         return None
-    return {
-        "module": path,
-        "group_id": group.group(1),
-        "artifact_id": artifact.group(1),
-        "coordinate": f"{group.group(1)}:{artifact.group(1)}",
-    }
+    return f"{group.group(1)}:{artifact.group(1)}"
 
 
 def accessor_to_path(accessor):

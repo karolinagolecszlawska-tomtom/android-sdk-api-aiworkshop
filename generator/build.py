@@ -9,6 +9,7 @@ from generator import catalogs as catalogs_mod
 from generator import github
 from generator.codeowners import Codeowners
 from generator.modules import BUILD_FILE, api_deps, module_dirs, parse_module
+from generator.redact import redact
 from generator.state import module_stability
 from generator.versions import behind, latest_rc, release_tags
 
@@ -16,25 +17,33 @@ DOCS_REFERENCES = ["mapdisplay-for-unity", "devportal-documentation"]
 STATE_FILE = "api/state.csv"
 
 
-def _behind(pin, baseline, tags, label):
-    if not pin or not baseline:
-        return "unknown"
-    try:
-        return behind(pin, baseline, tags, label)
-    except ValueError:  # pin is not a release tag (e.g. a snapshot)
-        return "unknown"
-
-
 def _version_row(pin, baselines, tags):
+    """Raises ValueError when the pin or a baseline is not a release tag."""
     return {"pinned": pin,
-            "behind_stable": _behind(pin, baselines["stable"], tags, "stable"),
-            "behind_rc": _behind(pin, baselines["rc"], tags, "RC")}
+            "behind_stable": behind(pin, baselines["stable"], tags, "stable"),
+            "behind_rc": behind(pin, baselines["rc"], tags, "RC")}
 
 
-def assemble(*, codeowners_text, tree_paths, gradle_texts, state_texts, catalogs, releases,
+def in_scope_modules(owners, tree_paths):
+    """Module dirs under maps/ that a CODEOWNERS pattern naming the team covers (D-3)."""
+    return [d for d in module_dirs(tree_paths) if owners.in_scope(d)]
+
+
+def published_modules(gradle_texts):
+    """{module dir: coordinate} for the modules whose build file publishes one (D-12)."""
+    published = {}
+    for module in sorted(gradle_texts):
+        coordinate = parse_module(gradle_texts[module])
+        if coordinate is not None:
+            published[module] = coordinate
+    return published
+
+
+def assemble(*, codeowners_text, published, gradle_texts, state_texts, catalogs, releases,
              latest_tag, extra_catalogs=None):
     """Dashboard model.
 
+    published:      {module dir: coordinate} of the in-scope published modules
     gradle_texts:   {module dir: build.gradle.kts text}
     state_texts:    {module dir: api/state.csv text, or None when the module has none}
     catalogs:       {consumer repo: version catalog text}
@@ -43,22 +52,16 @@ def assemble(*, codeowners_text, tree_paths, gradle_texts, state_texts, catalogs
     extra_catalogs: {name: catalog text}, shown separately, never as consumers (D-6)
     """
     owners = Codeowners(codeowners_text)
-    in_scope = {d for d in module_dirs(tree_paths) if owners.in_scope(d)}
 
-    artifacts, by_module, deps = [], {}, {}
-    for module in sorted(in_scope):
-        info = parse_module(module, gradle_texts.get(module, ""))
-        if info is None:
-            continue  # unpublished (D-12)
+    artifacts, by_module = [], {}
+    for module in sorted(published):
         stability = module_stability(state_texts.get(module))
-        artifact = {"coordinate": info["coordinate"], "module": module,
+        artifact = {"coordinate": published[module], "module": module,
                     "owner": owners.owner_of(module), "stability": stability["stability"],
                     "packages": stability["packages"], "consumers": [], "consumer_total": 0}
         artifacts.append(artifact)
         by_module[module] = artifact
-    published = set(by_module)
-    for module in by_module:
-        deps[module] = api_deps(gradle_texts.get(module, ""), published)
+    deps = {m: api_deps(gradle_texts.get(m, ""), set(published)) for m in by_module}
     by_coord = {a["coordinate"]: a for a in artifacts}
 
     tags = release_tags(releases)
@@ -136,22 +139,23 @@ def collect(extra_catalog_paths=None, workers=8):
     tree_paths = github.tree(repo, ref)
     paths = set(tree_paths)
     owners_text = github.raw(repo, "CODEOWNERS", ref=ref)
-    owners = Codeowners(owners_text)
-    modules = [d for d in module_dirs(tree_paths) if owners.in_scope(d)]
+    modules = in_scope_modules(Codeowners(owners_text), tree_paths)
 
     def fetch(path):
         return github.raw(repo, path, ref=ref)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        gradle_f = {m: pool.submit(fetch, f"{m}/{BUILD_FILE}") for m in modules}
-        state_f = {m: pool.submit(fetch, f"{m}/{STATE_FILE}") for m in modules
-                   if f"{m}/{STATE_FILE}" in paths}
         cat_f = {r: pool.submit(github.raw, r, p)
                  for r, p in catalogs_mod.CONSUMER_CATALOGS.items()}
         rel_f = pool.submit(github.releases)
         latest_f = pool.submit(github.latest_release)
+        # Build files first: state.csv is fetched only for published modules (D-12).
+        gradle_f = {m: pool.submit(fetch, f"{m}/{BUILD_FILE}") for m in modules}
         gradle_texts = {m: f.result() for m, f in gradle_f.items()}
-        state_texts = {m: (state_f[m].result() if m in state_f else None) for m in modules}
+        published = published_modules(gradle_texts)
+        state_f = {m: pool.submit(fetch, f"{m}/{STATE_FILE}") for m in published
+                   if f"{m}/{STATE_FILE}" in paths}
+        state_texts = {m: (state_f[m].result() if m in state_f else None) for m in published}
         cats = {}
         for r, f in cat_f.items():
             text = f.result()
@@ -163,9 +167,9 @@ def collect(extra_catalog_paths=None, workers=8):
     extra = {}
     for name, path in (extra_catalog_paths or {}).items():
         with open(path, encoding="utf-8") as fh:
-            extra[name] = github.redact(fh.read())
+            extra[name] = redact(fh.read())
 
-    kwargs = dict(codeowners_text=owners_text, tree_paths=tree_paths, gradle_texts=gradle_texts,
+    kwargs = dict(codeowners_text=owners_text, published=published, gradle_texts=gradle_texts,
                   state_texts=state_texts, catalogs=cats, releases=releases, latest_tag=latest,
                   extra_catalogs=extra)
     raw_states = {m: t for m, t in state_texts.items() if t is not None}

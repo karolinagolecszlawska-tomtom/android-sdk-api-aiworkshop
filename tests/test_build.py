@@ -4,6 +4,7 @@ import unittest
 from unittest import mock
 
 from generator import build, github
+from generator.codeowners import Codeowners
 
 TEAM = "@tomtom-internal/lp-mapvis-mapdisplaysdk-android"
 CODEOWNERS = f"""
@@ -69,8 +70,8 @@ RELEASES = [{"tag_name": t, "draft": False} for t in TAGS] + [
 
 
 def model(**overrides):
-    kwargs = dict(codeowners_text=CODEOWNERS, tree_paths=TREE, gradle_texts=GRADLE,
-                  state_texts=STATE, catalogs=CATALOGS, releases=RELEASES, latest_tag="2.4.5",
+    kwargs = dict(codeowners_text=CODEOWNERS, published=build.published_modules(GRADLE),
+                  gradle_texts=GRADLE, state_texts=STATE, catalogs=CATALOGS, releases=RELEASES, latest_tag="2.4.5",
                   extra_catalogs={"old-version": catalog("2.6.0", COMMON, STANDARD)})
     kwargs.update(overrides)
     return build.assemble(**kwargs)
@@ -89,6 +90,18 @@ class AssembleTest(unittest.TestCase):
                          {DUO, COMMON, STANDARD, LEAF, JPN, NAV})
         self.assertEqual(art(self.m, NAV)["owner"], "go-sdk-android-maps-vismods")
         self.assertEqual(art(self.m, DUO)["owner"], "lp-mapvis-mapdisplaysdk-android")
+
+    def test_in_scope_modules_from_codeowners_and_tree(self):
+        self.assertEqual(build.in_scope_modules(Codeowners(CODEOWNERS), TREE), sorted(GRADLE))
+
+    def test_published_modules_skip_unpublished(self):
+        published = build.published_modules(GRADLE)
+        self.assertNotIn("maps/docs", published)
+        self.assertEqual(published["maps/visualization/navigation"], NAV)
+
+    def test_catalog_without_mapvis_libraries_fails_loudly(self):
+        with self.assertRaises(ValueError):
+            model(extra_catalogs={"empty": '[versions]\ngosdk = "2.6.0"\n'})
 
     def test_direct_pairs_from_catalogs_deduped(self):
         self.assertEqual(
@@ -159,24 +172,74 @@ class AssembleTest(unittest.TestCase):
         json.dumps(self.m)
 
 
+class CollectTest(unittest.TestCase):
+    """collect() fetches state.csv only for published modules (D-12)."""
+
+    def test_unpublished_module_state_csv_not_fetched_nor_counted(self):
+        docs_state = STATE_HDR + "x;d;com.tomtom.docs.D;class;INTERNAL_AVAILABILITY;true;\n"
+        files = {"CODEOWNERS": CODEOWNERS, "maps/docs/api/state.csv": docs_state}
+        files.update({f"{m}/build.gradle.kts": t for m, t in GRADLE.items()})
+        files.update({f"{m}/api/state.csv": t for m, t in STATE.items() if t is not None})
+        tree = TREE + [p for p in files if p.endswith("/api/state.csv")]
+        fetched = []
+
+        def raw(repo, path, ref=None):
+            fetched.append(path)
+            if repo != github.SDK_REPO:
+                return CATALOGS[repo]
+            return files.get(path)
+
+        with mock.patch.object(github, "tree", return_value=tree), \
+                mock.patch.object(github, "raw", side_effect=raw), \
+                mock.patch.object(github, "releases", return_value=RELEASES), \
+                mock.patch.object(github, "latest_release", return_value="2.4.5"):
+            kwargs, raw_states = build.collect()
+        self.assertNotIn("maps/docs/api/state.csv", fetched)
+        self.assertIn("maps/map-display-common/api/state.csv", fetched)
+        self.assertNotIn("maps/docs", raw_states)
+        self.assertNotIn("maps/docs", kwargs["state_texts"])
+        self.assertEqual(set(raw_states), {m for m, t in STATE.items() if t is not None})
+        m = build.assemble(**kwargs)
+        self.assertEqual(m["state_totals"]["INTERNAL_AVAILABILITY"], 1)
+
+
 class GithubTest(unittest.TestCase):
     def _run(self, stdout):
         return mock.patch.object(github.subprocess, "run", return_value=subprocess.CompletedProcess(
             [], 0, stdout=stdout, stderr=""))
 
-    def test_raw_is_get_only_and_redacted(self):
-        with self._run("url = https://x/?key=abcdef123456XYZ\n") as run:
+    def test_raw_is_redacted(self):
+        with self._run("url = https://x/?key=abcdef123456XYZ\n"):
             text = github.raw("r2-navapp", "gradle/x.toml")
         self.assertEqual(text, "url = https://x/?key=***\n")
-        args = run.call_args.args[0]
-        self.assertEqual(args[:2], ["gh", "api"])
-        for flag in ("--method", "-X", "-f", "-F", "--field", "--raw-field", "--input"):
-            self.assertNotIn(flag, args)
+
+    def test_every_call_is_get_only(self):
+        calls = {
+            "raw": (lambda: github.raw("r2-navapp", "gradle/x.toml"), "x\n"),
+            "tree": (lambda: github.tree("go-sdk-android", "master"),
+                     json.dumps({"truncated": False, "tree": [{"path": "a"}]})),
+            "releases": (github.releases, '{"tag_name": "2.4.5", "draft": false}\n'),
+            "latest_release": (github.latest_release, "2.4.5\n"),
+        }
+        for name, (call, stdout) in calls.items():
+            with self.subTest(name), self._run(stdout) as run:
+                call()
+                args = run.call_args.args[0]
+                self.assertEqual(args[:2], ["gh", "api"])
+                for flag in ("--method", "-X", "-f", "-F", "--field", "--raw-field", "--input"):
+                    self.assertNotIn(flag, args)
 
     def test_raw_missing_file_returns_none(self):
         err = subprocess.CompletedProcess([], 1, stdout="", stderr="HTTP 404: Not Found")
         with mock.patch.object(github.subprocess, "run", return_value=err):
             self.assertIsNone(github.raw("go-sdk-android", "maps/x/api/state.csv", ref="master"))
+
+    def test_raw_error_merely_containing_404_raises(self):
+        err = subprocess.CompletedProcess([], 1, stdout="",
+                                          stderr="HTTP 502: Bad Gateway (request 40412)")
+        with mock.patch.object(github.subprocess, "run", return_value=err):
+            with self.assertRaises(RuntimeError):
+                github.raw("go-sdk-android", "CODEOWNERS", ref="master")
 
     def test_raw_other_error_raises(self):
         err = subprocess.CompletedProcess([], 1, stdout="", stderr="HTTP 401: Bad credentials")

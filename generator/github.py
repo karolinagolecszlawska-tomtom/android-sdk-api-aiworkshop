@@ -30,7 +30,7 @@ def raw(repo, path, ref=None):
     """Redacted contents of `path` in `repo` (default branch when `ref` is None); None on 404."""
     endpoint = f"repos/{ORG}/{repo}/contents/{path}" + (f"?ref={ref}" if ref else "")
     proc = _gh(endpoint, "-H", RAW_ACCEPT)
-    if proc.returncode != 0 and "404" in proc.stderr:
+    if proc.returncode != 0 and "HTTP 404" in proc.stderr:
         return None
     return redact(_check(proc, endpoint))
 

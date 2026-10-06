@@ -8,6 +8,7 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 import unittest
 from unittest import mock
 
@@ -22,6 +23,8 @@ RUN_HINT = ("run `python3 -m generator --out out "
 
 CONSUMERS = ["oneapp-android", "navapp-automotive", "r2-navapp"]
 DOCS_REPOS = ["mapdisplay-for-unity", "devportal-documentation"]
+# Date-pinned baselines (2026-10-06): 2.4.5, 2.8.0-rc01 and the 12-behind fixture count below
+# change with each go-sdk-android release; see ACCEPTANCE.md "Open decisions".
 LATEST_STABLE, LATEST_RC = "2.4.5", "2.8.0-rc01"
 DUO = "com.tomtom.sdk.maps:map-display-duo-internal"
 KEY_RE = re.compile(r"key=[A-Za-z0-9_\-]{8,}")
@@ -117,7 +120,7 @@ class AcceptanceTest(Generated):
     def test_m4_old_version_fixture(self):
         [row] = [r for r in self.data["extra_consumers"] if r["name"] == "old-version"]
         self.assertEqual(row["pinned"], "2.6.0")
-        self.assertEqual(row["behind_rc"], 12)
+        self.assertEqual(row["behind_rc"], 12)  # date-pinned, see LATEST_STABLE above
         self.assertEqual(row["behind_stable"], "ahead of stable")
 
     def test_m4_no_negative_counts_and_html_shows_both_baselines(self):
@@ -170,6 +173,8 @@ class AcceptanceTest(Generated):
                          sorted(all_pkgs - consumed_pkgs))
         for jk in ("jpn", "kor"):
             self.assertIn(f"com.tomtom.sdk.maps:map-display-premium-{jk}-styles", zero)
+        self.assertIn("com.tomtom.sdk.map.display.premium.jpn.styles",
+                      self.data["unconsumed"]["packages"])
         section = self.section("No consumers")
         for item in zero + self.data["unconsumed"]["packages"]:
             self.assertIn(f"<code>{item}</code>", section)
@@ -194,6 +199,11 @@ class AcceptanceTest(Generated):
         self.assertEqual(model_total, raw_count)
         self.assertEqual(self.data["state_totals"]["INTERNAL_AVAILABILITY"], raw_count)
         self.assertIn("<th>INTERNAL_AVAILABILITY</th>", self.html)
+        totals = self.section("Stability totals")
+        heads = re.findall(r"<th>([^<]*)</th>", totals)
+        cells = re.findall(r'<td class="num">(\d+)</td>', totals)
+        self.assertEqual(len(heads), len(cells))
+        self.assertEqual(int(dict(zip(heads, cells))["INTERNAL_AVAILABILITY"]), raw_count)
 
     # S5 -----------------------------------------------------------------------------------
     def test_s5_consumed_visualization_modules_state_unknown(self):
@@ -225,7 +235,9 @@ class InjectedKeyTest(unittest.TestCase):
         elif "/releases?" in endpoint:
             out = '{"tag_name":"2.4.5","draft":false}\n{"tag_name":"2.8.0-rc01","draft":false}\n'
         elif "contents/CODEOWNERS" in endpoint:
-            out = "/maps/** @tomtom-internal/lp-mapvis-mapdisplaysdk-android\n"
+            # The last-match owner of map-display-common carries a key: it reaches the model.
+            out = ("/maps/** @tomtom-internal/lp-mapvis-mapdisplaysdk-android\n"
+                   f"/maps/map-display-common/ @tomtom-internal/team-{s}\n")
         elif endpoint.endswith("build.gradle.kts?ref=master"):
             out = ('val artifactId by extra("map-display-common")\n'
                    f'val groupId by extra("com.tomtom.sdk.maps")\n// https://x/?{s}\n')
@@ -241,14 +253,15 @@ class InjectedKeyTest(unittest.TestCase):
         return subprocess.CompletedProcess(args, 0, stdout=out, stderr="")
 
     def test_m5_injected_key_is_obfuscated(self):
-        import tempfile
         from generator import __main__ as cli
         from generator import github
 
         with tempfile.TemporaryDirectory() as tmp:
             extra = os.path.join(tmp, "extra.versions.toml")
             with open(extra, "w", encoding="utf-8") as fh:
-                fh.write(f'[versions]\ngosdk = "2.6.0"  # {self.SECRET}\n')
+                fh.write(f'[versions]\ngosdk = "2.6.0"  # {self.SECRET}\n[libraries]\n'
+                         'a = { module = "com.tomtom.sdk.maps:map-display-common", '
+                         'version.ref = "gosdk" }\n')
             out = os.path.join(tmp, "out")
             with mock.patch.object(github.subprocess, "run", side_effect=self.fake_gh):
                 self.assertEqual(cli.main(["--out", out, "--extra-catalog", f"x={extra}"]), 0)
@@ -261,6 +274,36 @@ class InjectedKeyTest(unittest.TestCase):
         for name, text in texts:
             self.assertIsNone(KEY_RE.search(text), f"API key in {name}")
         self.assertIn("key=***", dict(texts)["state.csv"])
+        self.assertIn("team-key=***", dict(texts)["data.json"])
+        self.assertIn("team-key=***", dict(texts)["dashboard.html"])
+
+    def test_m5_output_stage_redacts_model(self):
+        """A key that reaches the model unredacted is still obfuscated in both outputs."""
+        from generator import __main__ as cli
+        from generator import build
+
+        model = {
+            "baselines": {"stable": LATEST_STABLE, "rc": LATEST_RC},
+            "artifacts": [{"coordinate": "com.tomtom.sdk.maps:x", "module": "maps/x",
+                           "owner": f"team-{self.SECRET}", "stability": None,
+                           "packages": {"com.tomtom.x": {"GA": 1}}, "consumers": [],
+                           "consumer_total": 0}],
+            "state_totals": {"GA": 1},
+            "docs_references": [f"https://x/?{self.SECRET}"],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "out")
+            with mock.patch.object(build, "collect", return_value=({}, {})), \
+                    mock.patch.object(build, "assemble", return_value=model):
+                self.assertEqual(cli.main(["--out", out]), 0)
+            texts = {}
+            for name in ("data.json", "dashboard.html"):
+                with open(os.path.join(out, name), encoding="utf-8") as fh:
+                    texts[name] = fh.read()
+        for name, text in texts.items():
+            self.assertNotIn("Zx9SECRETtoken_123", text, name)
+            self.assertIsNone(KEY_RE.search(text), f"API key in {name}")
+            self.assertIn("team-key=***", text, name)
 
 
 if __name__ == "__main__":

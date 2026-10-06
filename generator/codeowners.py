@@ -61,6 +61,7 @@ class Codeowners:
         return owner
 
     def in_scope(self, path, team=TEAM):
-        """True when any pattern naming `team` matches `path`."""
-        return any(team in owners and self._matches(regex, path)
-                   for _, regex, owners in self.rules)
+        """True when any pattern naming `team` (see team_paths) matches `path`."""
+        patterns = set(self.team_paths(team))
+        return any(pattern in patterns and self._matches(regex, path)
+                   for pattern, regex, _ in self.rules)
