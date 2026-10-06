@@ -1,6 +1,6 @@
 """Acceptance checks (ACCEPTANCE.md / light-design "Why & what") against the generated `out/`.
 
-Needs a prior live run:
+Needs a prior live run (without one, the checks on out/ are skipped):
   python3 -m generator --out out --extra-catalog old-version=fixtures/old-version.versions.toml
 """
 import csv
@@ -8,6 +8,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -35,7 +36,7 @@ class Generated(unittest.TestCase):
 
     def setUp(self):
         if not os.path.exists(DATA) or not os.path.exists(HTML):
-            self.fail(f"{DATA} or {HTML} missing: {RUN_HINT}")
+            self.skipTest(f"{DATA} or {HTML} missing: {RUN_HINT}")
         if Generated._cache is None:
             with open(DATA, encoding="utf-8") as fh:
                 data_text = fh.read()
@@ -304,6 +305,23 @@ class InjectedKeyTest(unittest.TestCase):
             self.assertNotIn("Zx9SECRETtoken_123", text, name)
             self.assertIsNone(KEY_RE.search(text), f"API key in {name}")
             self.assertIn("team-key=***", text, name)
+
+
+class CleanCheckoutTest(unittest.TestCase):
+    """Without a prior live run (no out/), the acceptance checks skip instead of failing."""
+
+    def test_acceptance_skips_when_outputs_missing(self):
+        module = sys.modules[__name__]
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = os.path.join(tmp, "out")
+            result = unittest.TestResult()
+            with mock.patch.object(module, "DATA", os.path.join(missing, "data.json")), \
+                    mock.patch.object(module, "HTML", os.path.join(missing, "dashboard.html")):
+                AcceptanceTest("test_m4_baselines").run(result)
+        self.assertEqual(result.failures, [])
+        self.assertEqual(result.errors, [])
+        self.assertEqual(len(result.skipped), 1)
+        self.assertIn("python3 -m generator", result.skipped[0][1])
 
 
 if __name__ == "__main__":
