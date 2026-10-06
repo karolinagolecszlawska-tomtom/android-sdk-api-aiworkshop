@@ -1,0 +1,33 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "github.raw None-on-404 contract vs build.collect/published_modules/api_deps consumers of gradle_texts",
+    "catalogs.pinned_version -> versions.tag_key ValueError contract vs build._version_row callers (real and extra catalogs)",
+    "state.package_of/tally output keys vs html._packages and build unconsumed-package set",
+    "codeowners/modules/state/redact/html call chains in assemble and __main__ (grep of tests for precedent of empty-catalog and None inputs: none found)",
+    "transitive-pair loop in build.assemble against by_module/by_coord lookups and deps keys"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 319,
+      "summary": "gradle_texts values come straight from github.raw, which returns None on a 404 (github.py:496-500), but published_modules (parse_module regex .search) and assemble line 229 (api_deps findall via .get(m, \"\") returns None for a present key) assume str, so a build file that 404s despite being in the tree raises TypeError.",
+      "effect": "A transient or racing 404 on one module's build file aborts the whole generator run with a traceback instead of skipping that module or naming it."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 242,
+      "summary": "pinned_version returns None for a catalog with no kept MapVis libraries (catalogs.py:387), and _version_row passes it to behind -> tag_key, which raises ValueError (versions.py:821); a non-release pin such as a SNAPSHOT or a version given as a table also hits this, for real consumers and for --extra-catalog at line 278.",
+      "effect": "One consumer catalog that drops all maps libraries or pins a non-release version stops the whole dashboard from being generated, with a bare ValueError that does not say which repo."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/state.py",
+      "line": 796,
+      "summary": "package_of returns an empty string when the name has no leading lowercase segment, and tally uses it as a package key; html._packages (html.py:605) and build's unconsumed package set (build.py:266-267) assume non-empty package names.",
+      "effect": "The dashboard shows a blank package heading and an empty entry in the 'No consumers' package list for such rows."
+    }
+  ]
+}

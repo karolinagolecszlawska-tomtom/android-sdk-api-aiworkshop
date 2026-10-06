@@ -1,0 +1,27 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "generator/build.py collect(): ThreadPoolExecutor fan-out, gradle fetch then state.csv fetch only for published modules, call count bounded by module count",
+    "generator/codeowners.py in_scope/owner_of/_matches: per-module loop over all rules with prefix regex matches, recomputed team_paths set per call",
+    "generator/build.py assemble(): direct/transitive pair loops, consumer totals, state_totals; all linear in artifacts x consumers",
+    "generator/github.py _gh/raw/tree/releases: blocking subprocess calls with no timeout, paginate via gh, redact regex per file",
+    "generator/state.py, html.py, versions.py, catalogs.py: single-pass parsing and rendering, no nested scans over large inputs",
+    "grep in generator/ for existing timeout or caching precedent: none found, so grounded on the diff alone"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/github.py",
+      "line": 485,
+      "summary": "subprocess.run for every gh api call has no timeout, and collect() waits on all futures (build.py:319, 330) so one stalled gh process blocks the whole thread pool join indefinitely",
+      "effect": "A regeneration can hang forever on a stalled network or auth prompt instead of failing, exceeding the 30 minute budget with no error."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/codeowners.py",
+      "line": 458,
+      "summary": "in_scope rebuilds set(self.team_paths(team)) and scans all rules on every call, and build.in_scope_modules calls it once per module directory, so the invariant set is recomputed inside the loop",
+      "effect": "none: only a small CPU cost during generation, a few hundred modules times a few hundred rules."
+    }
+  ]
+}

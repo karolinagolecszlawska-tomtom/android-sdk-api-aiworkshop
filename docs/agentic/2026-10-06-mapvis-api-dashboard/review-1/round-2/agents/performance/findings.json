@@ -1,0 +1,19 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "generator/build.py collect(): ThreadPoolExecutor fetch fan-out, gradle-then-state.csv ordering, per-module gh subprocess count",
+    "generator/codeowners.py in_scope/owner_of/_matches: per-call work over all rules and path prefixes, called once per maps/ module dir",
+    "generator/build.py assemble(): set(published) rebuilt per module, consumer/transitive loops, state_totals loops",
+    "generator/github.py + state.py + html.py + versions.py: pagination, tree fetch, row parsing, rendering loops, tag_key per tag",
+    "grepped repo for other callers of in_scope to see if the hot path is wider than build.in_scope_modules (only build.py)"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/codeowners.py",
+      "line": 458,
+      "summary": "in_scope rebuilds set(self.team_paths(team)) (a full scan of all CODEOWNERS rules) on every call, then scans all rules again and runs a regex fullmatch per path prefix; build.in_scope_modules calls it once per maps/ module dir, so the work is modules x rules x depth with the team-pattern set recomputed each time.",
+      "effect": "a full regeneration spends extra seconds of CPU before any network fetch starts on a large CODEOWNERS file, with no change to the result."
+    }
+  ]
+}

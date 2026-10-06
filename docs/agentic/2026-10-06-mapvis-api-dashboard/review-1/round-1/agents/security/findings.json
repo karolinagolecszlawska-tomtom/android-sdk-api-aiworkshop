@@ -1,0 +1,19 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "secrets: traced redact.py through github.raw, __main__ output writes, html.render; grep of repo for key/token/secret found only the redact tests and ACCEPTANCE.md M5 (no committed secrets)",
+    "injection: github.py _gh uses an argv list with no shell, endpoints start with repos/; __main__ os.path.join uses module dirs from git tree paths (git forbids .. components); html.py escapes every interpolated value with _e",
+    "deserialization: only tomllib.loads and json.loads of gh output are used; no eval, pickle or yaml load anywhere in generator/",
+    "entry points: __main__.py is the only CLI and it routes all fetches through github.py GET-only helpers; --extra-catalog reads a local path the operator supplies and redacts it",
+    "dependencies: generator imports stdlib only; no manifest or lockfile added; gh binary resolved from PATH"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/redact.py",
+      "line": 749,
+      "summary": "KEY_RE only matches lowercase `key=` followed by 8+ chars of [A-Za-z0-9_-]; `apiKey=`, `KEY=`, `key=` with shorter tokens, or tokens containing `.`, `+`, `/`, `%` are missed or only partly masked (the tail after the first non-class char stays in the output).",
+      "effect": "A key written in a different case or with punctuation in a fetched gradle/catalog/state file is published in the HTML and JSON dashboard instead of being masked."
+    }
+  ]
+}

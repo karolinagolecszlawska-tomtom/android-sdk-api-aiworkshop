@@ -1,0 +1,33 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "tests/test_acceptance.py Generated.setUp and AcceptanceTest (depends on prior live out/ run, hard-coded baselines)",
+    "tests/test_build.py AssembleTest, CollectTest, GithubTest against generator/build.py and github.py",
+    "grep for truncated / 'missing in' / RuntimeError across tests (error paths of tree() and collect catalog check)",
+    "tests/test_redact.py, test_versions.py, test_state.py vs generator/redact.py, versions.py, state.py",
+    "InjectedKeyTest offline M5 tests (fake_gh) as the offline counterpart to the live acceptance tests"
+  ],
+  "findings": [
+    {
+      "severity": "major",
+      "file": "tests/test_acceptance.py",
+      "line": 36,
+      "summary": "AcceptanceTest/Generated.setUp calls self.fail unless out/data.json and out/dashboard.html already exist from a separate live gh run, so ~15 acceptance tests error on any clean checkout or CI and a plain `unittest` run is red without network and gh auth.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "tests/test_acceptance.py",
+      "line": 123,
+      "summary": "Hard-coded date-pinned live values (LATEST_STABLE 2.4.5, LATEST_RC 2.8.0-rc01, behind_rc == 12, the 26 reference pairs) make tests fail on the next go-sdk-android release even though the generator is correct, so a failure does not signal a regression.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 180,
+      "summary": "The collect() branch raising RuntimeError when a consumer catalog is missing (text is None), and github.tree()'s truncated-tree RuntimeError, have no test; deleting either check leaves the suite green and a missing catalog would silently flow on.",
+      "effect": "none"
+    }
+  ]
+}

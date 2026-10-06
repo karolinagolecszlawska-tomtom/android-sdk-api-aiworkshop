@@ -1,0 +1,7 @@
+{
+  "model": "sonnet",
+  "checked": ["generator/github.py gh api subprocess calls (list args, no shell, constant org/repo/ref; stderr in RuntimeError)", "generator/redact.py KEY_RE and where redact() is applied (github.raw, build.collect extra catalogs, __main__ data.json, html.render)", "generator/html.py escaping: every interpolation goes through _e (html.escape); no hrefs, scripts or innerHTML", "generator/__main__.py and build.collect output path construction from tree module dirs and --extra-catalog paths; tomllib parsing in catalogs.py (no eval/pickle/yaml)", "grep for token/secret/eval/exec/shell=True across generator/ returned nothing risky; no new dependencies (stdlib only)"],
+  "findings": [
+    { "severity": "minor", "file": "generator/redact.py", "line": 4, "summary": "KEY_RE only matches the literal `key=` followed by [A-Za-z0-9_-]{8,}; keys with other characters (e.g. '.', '%', '~', '+') are only partly masked and `key: value`/`key = value` forms are not masked, yet this is the sole guard on fetched state.csv, data.json and dashboard.html.", "effect": "A fetched file containing an API key in a slightly different shape could be written unmasked (or with its tail visible) into the shared dashboard output." }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "light-design.md program-design bullets against generator/github.py, build.py, versions.py, state.py, catalogs.py, codeowners.py, modules.py, html.py, redact.py",
+    "light-design.md deviation rows 1-7 against the code they describe (signatures, ref handling, empty state.csv, 8 workers, redaction points)",
+    "N2/M5 verify commands and .gitignore entries against github.py contents and the diff's .gitignore",
+    "README.md and ACCEPTANCE.md grep for generator/out/python claims; fixtures/ and reference/ file names exist"
+  ],
+  "findings": [
+    {"severity": "minor", "file": "docs/agentic/2026-10-06-mapvis-api-dashboard/light-design.md", "line": 31, "summary": "Program design says releases() runs `gh api --paginate \"...releases?per_page=100\"`, but github.releases() also passes `--jq \".[] | {tag_name, draft}\"` and parses line-delimited JSON; the doc and deviations table never mention the jq projection.", "effect": "none"}
+  ]
+}

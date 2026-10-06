@@ -1,0 +1,14 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "light-design.md program-design bullets and deviations table against generator/*.py signatures and docstrings",
+    "module docstrings and model-shape docs in html.py and build.py against assemble() output keys",
+    "test naming and -k verify selectors in light-design against tests/test_acceptance.py test names",
+    "sibling test modules for import and naming patterns (alias used for html in test_html.py vs other tests)",
+    "README.md and repo root listing for generator usage docs (grep for python3 -m generator outside docs/agentic)"
+  ],
+  "findings": [
+    {"severity": "minor", "file": "docs/agentic/2026-10-06-mapvis-api-dashboard/light-design.md", "line": 41, "summary": "The tests/ bullet says test_acceptance.py 'fails with run python3 -m generator first when out/data.json is missing', but the committed tests call skipTest (Generated.setUp, CleanCheckoutTest), and the deviations table records no such change.", "effect": "none"},
+    {"severity": "minor", "file": "README.md", "line": 1, "summary": "The change adds a CLI (python3 -m generator --out out --extra-catalog ...) and a required live run before the acceptance tests, but README.md (repo root) has no usage or test instructions; the only record is in the design doc and module docstrings.", "effect": "none"}
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "github.raw None-on-404 contract versus its callers in build.collect (gradle_texts, CODEOWNERS) and parse_module/Codeowners input assumptions",
+    "out/raw consumer: __main__ writes state files without clearing, test_acceptance S4 os.walk(RAW) tally",
+    "versions.tag_key/behind/pinned_version callers in build._version_row for None or non-tag pins",
+    "state.parse_rows, modules.api_deps accessor_to_path and codeowners glob matching against the in-scope set",
+    "redact applied in github.raw and html.render versus parse inputs and model shape read by html.py"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/__main__.py",
+      "line": 144,
+      "summary": "Raw state files are written into out/raw/ without clearing earlier runs; test_acceptance's S4 check os.walk()s the whole out/raw and compares its tally to the model's state_totals, so a module removed or unpublished since a previous run leaves stale state.csv files that the new model no longer counts.",
+      "effect": "After the SDK drops a module, the S4 acceptance check reports a mismatch (or passes against stale data) even though the fresh dashboard is correct."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 320,
+      "summary": "github.raw is documented to return None on 404, but gradle_texts values and the CODEOWNERS text (line 306) are passed straight to parse_module/Codeowners, which assume str; a None build file or CODEOWNERS crashes with TypeError/AttributeError instead of a clear error (catalogs get an explicit None check at line 327, these do not).",
+      "effect": "If a build file or CODEOWNERS is missing or moved, the generator dies with an opaque traceback rather than a message naming the missing file."
+    }
+  ]
+}

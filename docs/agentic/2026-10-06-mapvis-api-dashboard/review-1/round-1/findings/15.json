@@ -1,0 +1,11 @@
+{
+  "index": 15,
+  "severity": "major",
+  "file": "tests/test_acceptance.py",
+  "line": 36,
+  "summary": "AcceptanceTest/Generated.setUp calls self.fail unless out/data.json and out/dashboard.html already exist from a separate live gh run, so ~15 acceptance tests error on any clean checkout or CI and a plain `unittest` run is red without network and gh auth.",
+  "effect": "none",
+  "dimension": "testability",
+  "also_flagged_by": [],
+  "merged": []
+}

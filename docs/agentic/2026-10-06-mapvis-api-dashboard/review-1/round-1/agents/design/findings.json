@@ -1,0 +1,41 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "generator/build.py assemble/collect split and what __main__ imports from it (STATE_FILE)",
+    "redact() call sites across github.py, build.py, html.py, __main__.py",
+    "html.py model-shape contract versus the dict built in build.assemble",
+    "html._packages tuple union (dict | sentinel str) and its isinstance consumer",
+    "codeowners.in_scope / team_paths reuse and catalogs->versions.tag_key coupling",
+    "repo-wide search for precedent: repository holds only this change, no prior convention found"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/github.py",
+      "line": 35,
+      "summary": "Redaction responsibility is scattered: the transport layer (github.raw) redacts, build.collect redacts extra catalogs, __main__ redacts data.json and html.render redacts again, so no single stage owns M5 and a new output path can silently skip it.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/html.py",
+      "line": 91,
+      "summary": "_packages returns rows whose second element is either a counts dict or a sentinel string (STATE_UNKNOWN / EMPTY_CELL) and _package_sections discriminates with isinstance(counts, str); presentation state is encoded in the data type and inferred from empty packages/None stability instead of an explicit model field.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 281,
+      "summary": "The model shape consumed by html.render is documented only in the html.py docstring while build.assemble builds the dict inline; the two modules share an implicit untyped contract, so a renamed key in build fails only at render time (html uses .get defaults that mask omissions).",
+      "effect": "A key rename in the model could silently render an empty section in the dashboard rather than failing."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/__main__.py",
+      "line": 145,
+      "summary": "The CLI builds the out/raw/<module>/api/state.csv layout using build.STATE_FILE, so the on-disk layout that acceptance tests read is split between __main__ and build instead of one writer owning output paths.",
+      "effect": "none"
+    }
+  ]
+}

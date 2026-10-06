@@ -1,0 +1,47 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "generator/build.py assemble vs collect split and the inputs assemble takes",
+    "generator/__main__.py, build.py, html.py, github.py redact call sites (grep redact)",
+    "generator/state.py vs build.STATE_FILE and modules.BUILD_FILE constant placement",
+    "generator/html.py model contract (stability sentinel, empty-state inference) against state.module_stability",
+    "generator/codeowners.py, catalogs.py, versions.py public surface and cross-module imports"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 182,
+      "summary": "STATE_FILE (the api/state.csv path) is defined in build.py instead of generator/state.py, while the sibling BUILD_FILE lives in modules.py; __main__.py then reaches into build.STATE_FILE to lay out out/raw, leaking the state-file location through the assembler module.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 219,
+      "summary": "assemble() re-parses codeowners_text and also takes both `published` and `gradle_texts`, although collect() already built Codeowners and derived published from the same texts; the pure assembler's input contract carries redundant, collect-derived data that can disagree (published keys vs gradle_texts keys).",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/html.py",
+      "line": 601,
+      "summary": "The renderer infers three artifact states from a stringly-typed sentinel plus an empty-dict check (stability == STATE_UNKNOWN, else `not a[\"packages\"]` means empty state.csv); the 'empty state.csv' case has no explicit field in the model that state.module_stability produces, so the contract between state.py and html.py is implicit.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 283,
+      "summary": "The model published as out/data.json carries `tags`, `direct_pairs`, `transitive_pairs` and `state_totals` that html.py does not read (documented as added for acceptance checks), widening the data contract to serve tests and duplicating information already in artifacts[].consumers.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/html.py",
+      "line": 695,
+      "summary": "Redaction is applied at four layers (github.raw, build.collect extra catalogs, __main__ for data.json, html.render for HTML) with no single owner; render() redacts itself while data.json redaction lives in the CLI, so a new writer or caller of assemble gets inconsistent protection.",
+      "effect": "A future output path (or a library caller of assemble) could emit an unredacted API key into generated files."
+    }
+  ]
+}

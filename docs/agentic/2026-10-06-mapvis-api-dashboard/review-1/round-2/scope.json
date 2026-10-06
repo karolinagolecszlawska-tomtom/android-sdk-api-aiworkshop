@@ -1,0 +1,215 @@
+{
+  "round": 2,
+  "default_branch": "origin/main",
+  "base_sha": "ee1aef5dc3d87c3ea070d1c4f26aeb9390803ddb",
+  "head_sha": "cce91d53ae32e549c3ff8740836fb83c7f3de0ae",
+  "feature_dir": "docs/agentic/2026-10-06-mapvis-api-dashboard",
+  "artifacts": [
+    "light-design.md"
+  ],
+  "dimensions": {
+    "correctness": {
+      "state": "reviewed",
+      "focus": "Logic errors, wrong conditions, off-by-one, unhandled null or empty input, silent failures: a catch that swallows, a fallback that hides an error, an error path that reports success.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__main__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/github.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/versions.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_acceptance.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_versions.py"
+      ]
+    },
+    "contracts": {
+      "state": "reviewed",
+      "focus": "Contracts the change crosses: for every pre-existing function, class or value this change gives a new caller, a new input or a new consumer, what that code assumes about rate, size, nullability, thread, ordering or lifetime and whether the new side honours it; and for every value the change now produces differently, what each untouched consumer assumes about it.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__main__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/github.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/versions.py"
+      ]
+    },
+    "design": {
+      "state": "reviewed",
+      "focus": "Structure and boundaries: a responsibility in the wrong module, an abstraction that leaks, duplicated logic that already exists elsewhere in the repository, a public surface wider than its callers need.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__main__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/github.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/versions.py"
+      ]
+    },
+    "security": {
+      "state": "reviewed",
+      "focus": "Five categories, each walked on every changed file: secrets or credentials reaching a log, an error message or a caller; injection at a trust boundary (shell, SQL, path, template); unsafe deserialization or evaluation; a new entry point that skips a check its siblings make; dependency risk introduced by this change.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__main__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/github.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/versions.py"
+      ]
+    },
+    "performance": {
+      "state": "reviewed",
+      "focus": "Algorithmic complexity on a hot path, blocking I/O where the surroundings are asynchronous, unbounded growth of a collection or buffer, repeated work inside a loop that could run once.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__main__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/github.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/versions.py"
+      ]
+    },
+    "testability": {
+      "state": "reviewed",
+      "focus": "Whether the changed behaviour is covered by a test that would fail if the behaviour broke; tests shaped around the code rather than the requirement; assertions that cannot fail; setup copied across many tests.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__main__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/github.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/versions.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_acceptance.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_versions.py"
+      ]
+    },
+    "conventions": {
+      "state": "reviewed",
+      "focus": "Only what no linter checks: a name that breaks the pattern its neighbours follow, a comment or docstring that no longer matches its code, a commit-visible convention of this repository the change ignores, tests or docs not updated when behaviour changed.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/__main__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/github.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/generator/versions.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/__init__.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_acceptance.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_build.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_catalogs.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_codeowners.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_html.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_modules.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_redact.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_state.py",
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/tests/test_versions.py"
+      ]
+    },
+    "docs-coherence": {
+      "state": "reviewed",
+      "focus": "Documentation against code: a document that states a name, value, flag, default or behaviour the change altered and the document did not follow. This dimension receives the changed prose and the diff, with no claim table; it reads the whole document when an excerpt cannot settle a claim.",
+      "model": "sonnet",
+      "read_set": [
+        "/Users/golecszl/work/ai/android-sdk-api-aiworkshop/.gitignore"
+      ]
+    },
+    "dependencies": {
+      "state": "not applicable",
+      "reason": "no dependency manifest or lockfile changed",
+      "focus": "A new dependency that the repository already has an equivalent for, a version range widened without reason, a lockfile out of step with its manifest, a dependency whose licence or maintenance the repository would not accept.",
+      "model": "none",
+      "read_set": []
+    },
+    "infra": {
+      "state": "not applicable",
+      "reason": "no .tf or .tfvars file changed",
+      "focus": "Terraform: a resource whose destroy would lose data, a permission wider than the resource needs, a hard-coded secret or account, a change that would recreate a resource in place.",
+      "model": "none",
+      "read_set": []
+    },
+    "tools-verify": {
+      "state": "reviewed",
+      "focus": "The project's own verify command, run in place by the prepass; a non-zero exit is one major finding, a command that cannot be found or runs past ten minutes is a gap.",
+      "model": "none",
+      "read_set": []
+    }
+  },
+  "withheld": [
+    "docs/agentic/2026-10-06-mapvis-api-dashboard/light-design.md"
+  ],
+  "unmatched_paths": [
+    ".gitignore"
+  ],
+  "gaps": [],
+  "verify_cmd": "time python3 -m generator --out out --extra-catalog old-version=fixtures/old-version.versions.toml && python3 -m unittest discover -s tests -v",
+  "verify_source": {
+    "file": "light-design.md",
+    "line": 52
+  }
+}

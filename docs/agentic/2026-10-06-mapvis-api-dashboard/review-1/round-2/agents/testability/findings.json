@@ -1,0 +1,61 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "tests/test_acceptance.py skip path and CleanCheckoutTest against the light-design verify commands",
+    "tests/test_build.py CollectTest and GithubTest versus generator/github.py and build.collect error branches",
+    "tests/test_acceptance.py InjectedKeyTest mock gh flow versus github.raw fetch-time redact",
+    "tests/test_state.py and tests/test_catalogs.py assertions versus state.parse_rows and CONSUMER_CATALOGS",
+    "grep for skipTest and truncated across tests/ and generator/ (only github.py:42 and one non-truncated mock)"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "tests/test_acceptance.py",
+      "line": 39,
+      "summary": "setUp skips every M1-M5/S1/S3/S4/S5 acceptance test when out/data.json is absent, so the per-rule verify commands exit 0 with only skips on a fresh checkout; CleanCheckoutTest asserts that skip is intended, so no rule-level check can fail without a prior live run.",
+      "effect": "A regression in the generated dashboard data is reported as a passing test run unless someone ran the live generator first."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/github.py",
+      "line": 42,
+      "summary": "The truncated-tree guard (raise RuntimeError when GitHub truncates the recursive tree) has no test; GithubTest only mocks tree responses with truncated False.",
+      "effect": "If the guard broke, a truncated tree would silently drop modules and consumers from the dashboard instead of failing the run."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/build.py",
+      "line": 141,
+      "summary": "collect() passes github.raw's None (404) for CODEOWNERS straight into Codeowners(); the 404-to-None path and the missing-consumer-catalog RuntimeError in collect are untested (CollectTest only covers the happy path and state.csv filtering).",
+      "effect": "A missing CODEOWNERS or catalog would surface as an unhelpful AttributeError/crash, and nothing guards the intended message."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/state.py",
+      "line": 16,
+      "summary": "parse_rows has a special branch for stray ';' inside the name and silently skips rows with fewer than 7 fields, but no test feeds a name containing ';' or a short row; test_state only covers well-formed rows, so both behaviours could change unnoticed.",
+      "effect": "Rows with unusual names could be miscounted or dropped from the stability tallies without any test failing."
+    },
+    {
+      "severity": "minor",
+      "file": "tests/test_catalogs.py",
+      "line": 52,
+      "summary": "test_consumer_catalog_files_are_fixed re-types the CONSUMER_CATALOGS dict literal and compares it to itself, and CollectTest's raw mock returns CATALOGS[repo] for any path, so no test fails if the wrong catalog path is fetched.",
+      "effect": "A wrong catalog filename for a consumer would pass the tests and only fail (404 RuntimeError) in a live run."
+    },
+    {
+      "severity": "minor",
+      "file": "tests/test_acceptance.py",
+      "line": 239,
+      "summary": "The comment says the owner key 'reaches the model', but the mocked gh goes through github.raw, which redacts CODEOWNERS at fetch time, so the 'team-key=***' assertions in test_m5_injected_key_is_obfuscated pass even if output-stage redaction were removed; only the second test exercises that stage.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "tests/test_acceptance.py",
+      "line": 29,
+      "summary": "Acceptance assertions hardcode LATEST_STABLE 2.4.5, LATEST_RC 2.8.0-rc01 and 12-behind counts against live data, so the tests fail on the next go-sdk-android release even though the code is unchanged.",
+      "effect": "A routine SDK release turns the acceptance suite red with no code defect, eroding trust in failures."
+    }
+  ]
+}

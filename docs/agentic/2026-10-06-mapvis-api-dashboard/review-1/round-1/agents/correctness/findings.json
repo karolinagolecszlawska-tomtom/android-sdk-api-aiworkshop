@@ -1,0 +1,61 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "generator/build.py assemble and collect: transitive pairs, totals, unconsumed sets, futures and None handling",
+    "generator/codeowners.py glob regex, prefix matching, last-match owner and in_scope",
+    "generator/state.py, catalogs.py, versions.py: row parsing, package derivation, dedupe, tag ordering and behind count",
+    "generator/github.py and __main__.py: 404 handling, truncated tree, output writing under out/raw",
+    "generator/redact.py and html.py rendering of empty/unknown states; tests/test_acceptance.py checks against model"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "generator/__main__.py",
+      "line": 34,
+      "summary": "out/raw is never cleared before writing, so state.csv files from modules removed or renamed since an earlier run persist and are counted by the S4 raw tally while data.json no longer contains them.",
+      "effect": "After an upstream module disappears, the INTERNAL_AVAILABILITY acceptance check fails (or compares against stale data) on a rerun into the same out directory."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/modules.py",
+      "line": 27,
+      "summary": "accessor_to_path only inserts a hyphen before each capital, so Gradle accessors for directories containing digits or acronym runs (e.g. mapDisplay3d, mapDisplayUI) map to the wrong path and the api dependency is silently dropped by the in_scope filter.",
+      "effect": "A transitive consumer (via an api dependency) is missing from the dashboard with no warning, understating that artifact's consumer total."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/redact.py",
+      "line": 4,
+      "summary": "KEY_RE token class is [A-Za-z0-9_-] only, so a key containing other characters (. / + % etc.) is cut at the first such character and the remainder stays in the output as key=*** followed by the rest of the secret.",
+      "effect": "Part of an API key can still appear in dashboard.html or data.json when the key contains a character outside the class."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/catalogs.py",
+      "line": 33,
+      "summary": "setdefault dedupes by module keeping the first alias even when its version resolved to None (missing ref or rich version), so a later alias with a resolvable version is discarded.",
+      "effect": "A consumer can show no pinned version for a library, or be left out of the lowest-pin computation, although another alias of the same module declares a version."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/catalogs.py",
+      "line": 30,
+      "summary": "Libraries declared with group/name keys instead of module (valid in a version catalog) are skipped without any error, so such direct pairs vanish silently.",
+      "effect": "A consumer using the group/name form shows fewer or zero consumed artifacts and the dashboard reports it as a valid result."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/state.py",
+      "line": 15,
+      "summary": "Lines with fewer than 7 ';'-separated fields are dropped silently in parse_rows, so a malformed or truncated state.csv row is neither counted nor reported.",
+      "effect": "Stability counts for a package can be lower than the real number of API rows without any warning."
+    },
+    {
+      "severity": "minor",
+      "file": "generator/github.py",
+      "line": 33,
+      "summary": "Any HTTP 404 (including a missing CODEOWNERS or a mistyped path) returns None; collect then passes None to Codeowners, which calls .splitlines() on it and fails with an unrelated AttributeError.",
+      "effect": "A missing CODEOWNERS file stops the run with a confusing traceback instead of a clear error naming the missing file."
+    }
+  ]
+}

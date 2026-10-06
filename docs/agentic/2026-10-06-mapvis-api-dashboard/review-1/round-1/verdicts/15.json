@@ -1,0 +1,8 @@
+{
+  "verdict": "CONFIRMED",
+  "fragility": "high",
+  "blast_radius": "contained",
+  "evidence": "tests/test_acceptance.py:37-38 calls self.fail when out/data.json or out/dashboard.html is absent; out/ is gitignored (.gitignore:1), so a clean checkout of HEAD has neither file and the acceptance suite fails. Lead claim survives (no merged claims). Damage is test-only: the dashboard and generator are unaffected.",
+  "effect": "A developer or CI job running unittest on a clean checkout sees 14 of 16 acceptance tests fail until a live gh-authenticated generator run has produced out/; the shipped dashboard itself does not change.",
+  "repro": { "cmd": "git archive HEAD | tar -x -C scratchpad/clone && cd scratchpad/clone && python3 -m unittest tests.test_acceptance", "outcome": "Ran 16 tests in 0.021s / FAILED (failures=14)" }
+}

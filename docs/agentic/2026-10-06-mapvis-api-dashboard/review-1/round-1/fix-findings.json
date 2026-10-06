@@ -1,0 +1,10 @@
+[
+  {
+    "severity": "major",
+    "file": "tests/test_acceptance.py",
+    "line": 36,
+    "summary": "AcceptanceTest/Generated.setUp calls self.fail unless out/data.json and out/dashboard.html already exist from a separate live gh run, so ~15 acceptance tests error on any clean checkout or CI and a plain `unittest` run is red without network and gh auth.",
+    "effect": "A developer or CI job running unittest on a clean checkout sees 14 of 16 acceptance tests fail until a live gh-authenticated generator run has produced out/; the shipped dashboard itself does not change.",
+    "evidence": "tests/test_acceptance.py:37-38 calls self.fail when out/data.json or out/dashboard.html is absent; out/ is gitignored (.gitignore:1), so a clean checkout of HEAD has neither file and the acceptance suite fails. Lead claim survives (no merged claims). Damage is test-only: the dashboard and generator are unaffected."
+  }
+]

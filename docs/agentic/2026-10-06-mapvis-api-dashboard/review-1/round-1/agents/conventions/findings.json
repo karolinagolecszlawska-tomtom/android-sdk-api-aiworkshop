@@ -1,0 +1,26 @@
+{
+  "model": "sonnet",
+  "checked": [
+    "README.md and ACCEPTANCE.md vs the new CLI entry point (README has no run or test command; only docstrings in generator/__main__.py and tests/test_acceptance.py)",
+    "module and function docstrings in generator/*.py against their code (build.assemble, build.collect, github.raw, html model-keys list, state.tally, versions.behind)",
+    "naming across generator modules and tests (catalogs_mod alias, _helper prefixes, test file per module, state.csv/STATE_FILE constants)",
+    "comments in tests (test_versions RECON_TAGS, test_acceptance date-pinned baselines, test_codeowners excerpt) against their data",
+    ".gitignore entries vs generated out/ and __pycache__ output; git ls-files for repo layout precedent"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "tests/test_versions.py",
+      "line": 5,
+      "summary": "Comment says RECON_TAGS runs 'from 2.6.0 up to 2.8.0-rc01' but the list also contains 2.4.5, 2.5.6 and 2.5.7, which are older than 2.6.0.",
+      "effect": "none"
+    },
+    {
+      "severity": "minor",
+      "file": "generator/__main__.py",
+      "line": 1,
+      "summary": "The change adds a CLI and a unittest suite but README.md (which documents what/build/validate) is not updated; the only run instructions live in the __main__ and test_acceptance docstrings, and the acceptance test fails until a live run was done.",
+      "effect": "none"
+    }
+  ]
+}

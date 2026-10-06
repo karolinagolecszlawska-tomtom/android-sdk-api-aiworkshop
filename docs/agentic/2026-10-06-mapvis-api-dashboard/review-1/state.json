@@ -1,0 +1,59 @@
+{
+  "feature_dir": "docs/agentic/2026-10-06-mapvis-api-dashboard",
+  "artifact": "docs/agentic/2026-10-06-mapvis-api-dashboard/review-1.md",
+  "run_dir": "docs/agentic/2026-10-06-mapvis-api-dashboard/review-1",
+  "default_branch": "origin/main",
+  "base_sha": "ee1aef5dc3d87c3ea070d1c4f26aeb9390803ddb",
+  "start_sha": "d961fd63691fd3d8b95011d8e177c661532830a1",
+  "head_sha": "cce91d53ae32e549c3ff8740836fb83c7f3de0ae",
+  "max_rounds": 3,
+  "rounds": [
+    {
+      "round": 1,
+      "counts": {
+        "critical": 0,
+        "major": 1,
+        "minor": 18
+      },
+      "blocking": 1,
+      "verdict": "CONTINUE",
+      "action": "fix",
+      "reason": "1 blocking finding to fix",
+      "fix": {
+        "status": "fixed",
+        "commits": [
+          {
+            "sha": "cce91d53ae32e549c3ff8740836fb83c7f3de0ae",
+            "subject": "fix(tests): skip out/ acceptance checks when no live run output exists"
+          }
+        ],
+        "gaps": [],
+        "attempts": 1,
+        "worker_line": "fixed 1 -> /Users/golecszl/work/ai/android-sdk-api-aiworkshop/docs/agentic/2026-10-06-mapvis-api-dashboard/review-1/round-1/fix-report.md"
+      }
+    },
+    {
+      "round": 2,
+      "counts": {
+        "critical": 0,
+        "major": 0,
+        "minor": 24
+      },
+      "blocking": 0,
+      "verdict": "APPROVED",
+      "action": "stop",
+      "reason": "no blocking findings"
+    }
+  ],
+  "verdict": {
+    "verdict": "APPROVED",
+    "action": "stop",
+    "round": 2,
+    "counts": {
+      "critical": 0,
+      "major": 0,
+      "minor": 24
+    },
+    "reason": "no blocking findings"
+  }
+}

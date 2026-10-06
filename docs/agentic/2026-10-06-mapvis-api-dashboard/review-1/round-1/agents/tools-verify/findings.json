@@ -1,0 +1,7 @@
+{
+  "model": "none",
+  "checked": [
+    "ran `time python3 -m generator --out out --extra-catalog old-version=fixtures/old-version.versions.toml && python3 -m unittest discover -s tests -v` in the checkout root; exit 0"
+  ],
+  "findings": []
+}
