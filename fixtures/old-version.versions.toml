@@ -1,0 +1,8 @@
+# Synthetic consumer used only to test the "releases behind" calculation.
+# Not a real repo. Pinned to an older go-sdk-android tag on purpose.
+[versions]
+gosdk = "2.6.0"
+
+[libraries]
+mapDisplayCommon = { module = "com.tomtom.sdk.maps:map-display-common", version.ref = "gosdk" }
+mapDisplayStandard = { module = "com.tomtom.sdk.maps:map-display-standard", version.ref = "gosdk" }
